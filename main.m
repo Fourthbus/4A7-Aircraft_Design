@@ -1,0 +1,1 @@
+[T, a, P, rho] = isatmos(1000);
