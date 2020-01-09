@@ -12,7 +12,7 @@ wmp  = 20276; % maximum payload kg
 wmto = 78245; % maximum take off kg
 np   = 189  ; % 189 passenger Ryanair 738
 smp  = 3740 ; % 2000 nm in km
-hci  = 32000; % initial cruise height ft.
+hci  = 37000; % initial cruise height ft.
 Mc   = 0.785; % cruise mach number 
 vc   = 233  ; % cruise air speed m/s
 ldc  = 17   ; % L/D at cruise
@@ -48,7 +48,7 @@ range = 1400;
 [T,P,rho,~] = isatmos(h,M); % ISA conditions
 [etacyc,etap] = turbine(OPR,theta,etac,etat,FPR,etaf,M,P); % turbine
 eta = etap * etacyc * etatr;
-v   = 1; % ratio of Ve to Ve*
+v=1;
 LoD = LoD_calc(v); % L/D at current stage
 H   = eta * LoD * LCV / 9.81 / 1000; % range parameter
 wf0 = (wp+we)*(1+k-exp(-range/H))/(exp(-range/H)-k)+1600; % fuel mass calculation 1600 reserve
@@ -74,24 +74,16 @@ while 1
     wl = m*9.81/Sw   ; % current wing loading
     [~,~,rhosl] = isatmos(h,M); % sea level reference
     Veo = (2*wl/rhosl)^.5 * (K2/K1)^(0.25); % optimised Ve
-    Ve  = v * Veo; % equvalent air speed
-    while 1
-        [T,P,rho,a] = isatmos(h,M);
-        Vt  = Ve * (rho/rhosl)^(-.5); % true air speed
-        M   = Vt/a; % mach number
-        if abs(Mc-M)<0.0004
-            break
-        elseif h+10 > 12496.8 % flight ceiling FL410
-            break
-        else
-            h = h+10;
-        end
-    end
+    Ve  = convvel(450,'kts','m/s'); % equvalent air speed
+    v = Ve/Veo;
+    [T,P,rho,a] = isatmos(h,M);
+    Vt  = Ve * (rho/rhosl)^(-.5); % true air speed
+    M   = Vt/a; % mach number
+    
     if M > 0.825 % excluede case when supersonic drag buggered
         M
     end
     [etacyc,etap] = turbine(OPR,theta,etac,etat,FPR,etaf,M,P); % turbine
-    
     eta = etap * etacyc * etatr; % overall engine effi.
     LoD = LoD_calc(v); % L/D at current stage
     H   = eta * LoD * LCV / 9.81 / 1000; % range parameter
@@ -106,12 +98,12 @@ while 1
 end
 
 figure(1);
-plot(data(:,1),data(:,2),'k+-');
+plot(data(:,1),data(:,2),'ko-');
 xlabel('Distance [km]','Interpreter','latex')
 ylabel('Height [ft.]','Interpreter','latex')
 
 figure(2);
-plot(data(:,1),data(:,3),'k^-');
+plot(data(:,1),data(:,3),'ko-');
 xlabel('Distance [km]','Interpreter','latex')
 ylabel('Fuel burnt [kg]','Interpreter','latex')
 ylim([0,5000]);
@@ -120,6 +112,3 @@ figure(3);
 plot(data(:,1),data(:,4),'ko-');
 xlabel('Distance [km]','Interpreter','latex')
 ylabel('Mach number','Interpreter','latex')
-
-figure(4);
-plot(data(:,1),data(:,5),'ko-');
